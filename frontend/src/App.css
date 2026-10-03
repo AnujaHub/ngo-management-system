@@ -423,6 +423,10 @@ em {
   color: rgba(22, 53, 45, 0.65);
   font-size: 0.76rem;
 }
+.project-card .project-dates {
+  margin-top: 8px;
+  font-size: 0.68rem;
+}
 .project-card-bottom {
   margin-top: 26px;
   padding-top: 13px;
@@ -834,6 +838,12 @@ em {
   margin-top: 4px;
   color: var(--muted);
   font-size: 0.65rem;
+}
+.active-project small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.62rem;
 }
 .active-project b {
   color: var(--green-dark);

@@ -37,6 +37,7 @@ const idMap = {
 const tableFields = {
     donors: [
         { label: 'Name', name: 'name', type: 'text', required: true },
+        { label: 'Email', name: 'email', type: 'email' },
         { label: 'Donor Type', name: 'donor_type', type: 'text' },
         { label: 'City', name: 'city', type: 'text' },
         { label: 'Organization', name: 'organization', type: 'text' },
@@ -44,48 +45,57 @@ const tableFields = {
     volunteers: [
         { label: 'Name', name: 'name', type: 'text', required: true },
         { label: 'Phone', name: 'phone', type: 'text' },
+        { label: 'Email', name: 'email', type: 'email' },
         { label: 'Skill', name: 'skill', type: 'text' },
+        { label: 'Project ID', name: 'project_id', type: 'number' },
         { label: 'Availability', name: 'availability', type: 'text' },
     ],
     projects: [
         { label: 'Project Name', name: 'project_name', type: 'text', required: true },
         { label: 'Category', name: 'category', type: 'text' },
         { label: 'Location', name: 'location', type: 'text' },
+        { label: 'Start Date', name: 'start_date', type: 'date' },
+        { label: 'End Date', name: 'end_date', type: 'date' },
         { label: 'Budget', name: 'budget', type: 'number', step: '0.01' },
+        { label: 'Status', name: 'status', type: 'text' },
     ],
     beneficiaries: [
         { label: 'Name', name: 'name', type: 'text', required: true },
         { label: 'Age', name: 'age', type: 'number' },
         { label: 'Location', name: 'location', type: 'text' },
         { label: 'Category', name: 'category', type: 'text' },
+        { label: 'Contact', name: 'contact', type: 'text' },
+        { label: 'Project ID', name: 'project_id', type: 'number' },
     ],
     donations: [
         { label: 'Donor ID', name: 'donor_id', type: 'number', required: true },
         { label: 'Project ID', name: 'project_id', type: 'number' },
         { label: 'Donation Date', name: 'donation_date', type: 'date' },
         { label: 'Amount', name: 'amount', type: 'number', step: '0.01', required: true },
+        { label: 'Payment Method', name: 'payment_method', type: 'text' },
     ],
 }
 
 const defaultValues = {
-    donors: { name: '', donor_type: '', city: '', organization: '' },
-    volunteers: { name: '', phone: '', skill: '', availability: '' },
-    projects: { project_name: '', category: '', location: '', budget: '' },
-    beneficiaries: { name: '', age: '', location: '', category: '' },
-    donations: { donor_id: '', project_id: '', donation_date: '', amount: '' },
+    donors: { name: '', email: '', donor_type: '', city: '', organization: '' },
+    volunteers: { name: '', phone: '', email: '', skill: '', project_id: '', availability: '' },
+    projects: { project_name: '', category: '', location: '', start_date: '', end_date: '', budget: '', status: '' },
+    beneficiaries: { name: '', age: '', location: '', category: '', contact: '', project_id: '' },
+    donations: { donor_id: '', project_id: '', donation_date: '', amount: '', payment_method: '' },
 }
 
 const entityColumns = {
-    donors: ['donor_id', 'name', 'donor_type', 'city', 'organization'],
-    volunteers: ['volunteer_id', 'name', 'phone', 'skill', 'availability'],
-    projects: ['project_id', 'project_name', 'category', 'location', 'budget'],
-    beneficiaries: ['beneficiary_id', 'name', 'age', 'location', 'category'],
-    donations: ['donation_id', 'donor_id', 'project_id', 'donation_date', 'amount'],
+    donors: ['donor_id', 'name', 'email', 'donor_type', 'city', 'organization'],
+    volunteers: ['volunteer_id', 'name', 'phone', 'email', 'skill', 'project_id', 'availability'],
+    projects: ['project_id', 'project_name', 'category', 'location', 'start_date', 'end_date', 'budget', 'status'],
+    beneficiaries: ['beneficiary_id', 'name', 'age', 'location', 'category', 'contact', 'project_id'],
+    donations: ['donation_id', 'donor_id', 'project_id', 'donation_date', 'amount', 'payment_method'],
 }
 
 const columnLabels = {
     donor_id: 'ID', volunteer_id: 'ID', project_id: 'ID', beneficiary_id: 'ID', donation_id: 'ID',
-    donor_type: 'Type', project_name: 'Project', donation_date: 'Date',
+    donor_type: 'Type', project_name: 'Project', donation_date: 'Date', start_date: 'Start', end_date: 'End',
+    payment_method: 'Payment method',
 }
 
 const entityMeta = {
@@ -196,7 +206,7 @@ function HomePage() {
 
 function ProjectCard({ project, index = 0 }) {
     const colors = ['mint', 'sand', 'blue', 'peach']
-    return <article className={`project-card ${colors[index % colors.length]}`}><div className="project-card-top"><span className="project-index">0{index + 1}</span><span className="status-badge">{project.status || 'Active'}</span></div><h3>{project.project_name}</h3><p>{project.category || 'Community initiative'} · {project.location || 'All regions'}</p><div className="project-card-bottom"><span>Budget</span><strong>{formatCurrency(project.budget)}</strong></div></article>
+    return <article className={`project-card ${colors[index % colors.length]}`}><div className="project-card-top"><span className="project-index">0{index + 1}</span><span className="status-badge">{project.status || 'Active'}</span></div><h3>{project.project_name}</h3><p>{project.category || 'Community initiative'} · {project.location || 'All regions'}</p><p className="project-dates">{formatDate(project.start_date)} – {formatDate(project.end_date)}</p><div className="project-card-bottom"><span>Budget</span><strong>{formatCurrency(project.budget)}</strong></div></article>
 }
 
 function DashboardPage() {
@@ -222,7 +232,7 @@ function ChartPanel({ title, subtitle, children }) { return <section className="
 
 function RecentDonations({ donations = [] }) { return <section className="data-panel"><div className="section-heading compact"><div><span className="section-kicker">LATEST ACTIVITY</span><h2>Recent donations</h2></div><Link className="text-link" to="/donations">View all →</Link></div><div className="table-wrap"><table className="modern-table"><thead><tr><th>Donor</th><th>Project</th><th>Amount</th><th>Date</th><th>Method</th></tr></thead><tbody>{donations.length ? donations.map((donation) => <tr key={donation.donation_id}><td><strong>{donation.donor_name || 'Unknown donor'}</strong></td><td>{donation.project_name || 'General fund'}</td><td className="amount-cell">{formatCurrency(donation.amount)}</td><td>{formatDate(donation.donation_date)}</td><td><span className="method-tag">{donation.payment_method || 'Recorded'}</span></td></tr>) : <tr><td colSpan="5" className="empty-cell">No donations recorded yet.</td></tr>}</tbody></table></div></section> }
 
-function ActiveProjects({ projects = [] }) { return <section className="data-panel"><div className="section-heading compact"><div><span className="section-kicker">IN PROGRESS</span><h2>Active projects</h2></div><Link className="text-link" to="/projects">View all →</Link></div><div className="active-project-list">{projects.slice(0, 4).map((project) => <div className="active-project" key={project.project_id}><div className="project-avatar">{project.project_name?.charAt(0) || 'P'}</div><div><strong>{project.project_name}</strong><span>{project.category || 'Initiative'} · {project.location || '—'}</span></div><b>{formatCurrency(project.budget)}</b></div>)}</div></section> }
+function ActiveProjects({ projects = [] }) { return <section className="data-panel"><div className="section-heading compact"><div><span className="section-kicker">IN PROGRESS</span><h2>Active projects</h2></div><Link className="text-link" to="/projects">View all →</Link></div><div className="active-project-list">{projects.slice(0, 4).map((project) => <div className="active-project" key={project.project_id}><div className="project-avatar">{project.project_name?.charAt(0) || 'P'}</div><div><strong>{project.project_name}</strong><span>{project.category || 'Initiative'} · {project.location || '—'}</span><small>{formatDate(project.start_date)} – {formatDate(project.end_date)}</small></div><b>{formatCurrency(project.budget)}</b></div>)}</div></section> }
 
 function QuickActions() { return <section className="quick-actions"><div><span className="section-kicker">SHORTCUTS</span><h2>Move things forward</h2></div><div className="quick-links"><Link to="/donors">＋ Add donor</Link><Link to="/volunteers">＋ Add volunteer</Link><Link to="/beneficiaries">＋ Add beneficiary</Link><Link to="/donations">＋ Add donation</Link><Link to="/projects">＋ Add project</Link></div></section> }
 

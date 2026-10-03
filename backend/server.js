@@ -321,6 +321,7 @@ app.get('/api/donors', async (req, res) => {
 app.post('/api/donors', async (req, res) => {
   const data = {
     name: cleanString(req.body.name),
+    email: cleanString(req.body.email),
     donor_type: cleanString(req.body.donor_type),
     city: cleanString(req.body.city),
     organization: cleanString(req.body.organization),
@@ -332,8 +333,8 @@ app.post('/api/donors', async (req, res) => {
   try {
     const donorId = await getNextId('donor', 'donor_id');
     const result = await pool.query(
-      'INSERT INTO donor (donor_id, name, donor_type, city, organization) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [donorId, data.name, data.donor_type || 'Individual', data.city || null, data.organization || null]
+      'INSERT INTO donor (donor_id, name, email, donor_type, city, organization) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;',
+      [donorId, data.name, data.email || null, data.donor_type || 'Individual', data.city || null, data.organization || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -345,6 +346,7 @@ app.post('/api/donors', async (req, res) => {
 app.put('/api/donors/:id', async (req, res) => {
   const data = {
     name: cleanString(req.body.name),
+    email: cleanString(req.body.email),
     donor_type: cleanString(req.body.donor_type),
     city: cleanString(req.body.city),
     organization: cleanString(req.body.organization),
@@ -355,8 +357,8 @@ app.put('/api/donors/:id', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE donor SET name = $1, donor_type = $2, city = $3, organization = $4 WHERE donor_id = $5 RETURNING *;',
-      [data.name, data.donor_type || 'Individual', data.city || null, data.organization || null, req.params.id]
+      'UPDATE donor SET name = $1, email = $2, donor_type = $3, city = $4, organization = $5 WHERE donor_id = $6 RETURNING *;',
+      [data.name, data.email || null, data.donor_type || 'Individual', data.city || null, data.organization || null, req.params.id]
     );
 
     if (result.rowCount === 0) return res.status(404).json({ error: 'Donor not found.' });
@@ -400,7 +402,9 @@ app.post('/api/volunteers', async (req, res) => {
   const data = {
     name: cleanString(req.body.name),
     phone: cleanString(req.body.phone),
+    email: cleanString(req.body.email),
     skill: cleanString(req.body.skill),
+    project_id: req.body.project_id,
     availability: cleanString(req.body.availability),
   };
 
@@ -410,8 +414,8 @@ app.post('/api/volunteers', async (req, res) => {
   try {
     const volunteerId = await getNextId('volunteer', 'volunteer_id');
     const result = await pool.query(
-      'INSERT INTO volunteer (volunteer_id, name, phone, skill, availability) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [volunteerId, data.name, data.phone || null, data.skill || null, data.availability || null]
+      'INSERT INTO volunteer (volunteer_id, name, phone, email, skill, project_id, availability) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;',
+      [volunteerId, data.name, data.phone || null, data.email || null, data.skill || null, toNumber(data.project_id), data.availability || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -424,7 +428,9 @@ app.put('/api/volunteers/:id', async (req, res) => {
   const data = {
     name: cleanString(req.body.name),
     phone: cleanString(req.body.phone),
+    email: cleanString(req.body.email),
     skill: cleanString(req.body.skill),
+    project_id: req.body.project_id,
     availability: cleanString(req.body.availability),
   };
 
@@ -433,8 +439,8 @@ app.put('/api/volunteers/:id', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE volunteer SET name = $1, phone = $2, skill = $3, availability = $4 WHERE volunteer_id = $5 RETURNING *;',
-      [data.name, data.phone || null, data.skill || null, data.availability || null, req.params.id]
+      'UPDATE volunteer SET name = $1, phone = $2, email = $3, skill = $4, project_id = $5, availability = $6 WHERE volunteer_id = $7 RETURNING *;',
+      [data.name, data.phone || null, data.email || null, data.skill || null, toNumber(data.project_id), data.availability || null, req.params.id]
     );
 
     if (result.rowCount === 0) return res.status(404).json({ error: 'Volunteer not found.' });
@@ -477,7 +483,10 @@ app.post('/api/projects', async (req, res) => {
     project_name: cleanString(req.body.project_name),
     category: cleanString(req.body.category),
     location: cleanString(req.body.location),
+    start_date: cleanString(req.body.start_date),
+    end_date: cleanString(req.body.end_date),
     budget: req.body.budget,
+    status: cleanString(req.body.status),
   };
 
   const validationError = validateProject(data);
@@ -486,8 +495,8 @@ app.post('/api/projects', async (req, res) => {
   try {
     const projectId = await getNextId('project', 'project_id');
     const result = await pool.query(
-      'INSERT INTO project (project_id, project_name, category, location, budget) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [projectId, data.project_name, data.category || null, data.location || null, toNumber(data.budget)]
+      'INSERT INTO project (project_id, project_name, category, location, start_date, end_date, budget, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;',
+      [projectId, data.project_name, data.category || null, data.location || null, data.start_date || null, data.end_date || null, toNumber(data.budget), data.status || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -501,7 +510,10 @@ app.put('/api/projects/:id', async (req, res) => {
     project_name: cleanString(req.body.project_name),
     category: cleanString(req.body.category),
     location: cleanString(req.body.location),
+    start_date: cleanString(req.body.start_date),
+    end_date: cleanString(req.body.end_date),
     budget: req.body.budget,
+    status: cleanString(req.body.status),
   };
 
   const validationError = validateProject(data);
@@ -509,8 +521,8 @@ app.put('/api/projects/:id', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE project SET project_name = $1, category = $2, location = $3, budget = $4 WHERE project_id = $5 RETURNING *;',
-      [data.project_name, data.category || null, data.location || null, toNumber(data.budget), req.params.id]
+      'UPDATE project SET project_name = $1, category = $2, location = $3, start_date = $4, end_date = $5, budget = $6, status = $7 WHERE project_id = $8 RETURNING *;',
+      [data.project_name, data.category || null, data.location || null, data.start_date || null, data.end_date || null, toNumber(data.budget), data.status || null, req.params.id]
     );
 
     if (result.rowCount === 0) return res.status(404).json({ error: 'Project not found.' });
@@ -557,6 +569,8 @@ app.post('/api/beneficiaries', async (req, res) => {
     age: req.body.age,
     location: cleanString(req.body.location),
     category: cleanString(req.body.category),
+    contact: cleanString(req.body.contact),
+    project_id: req.body.project_id,
   };
 
   const validationError = validateBeneficiary(data);
@@ -565,8 +579,8 @@ app.post('/api/beneficiaries', async (req, res) => {
   try {
     const beneficiaryId = await getNextId('beneficiary', 'beneficiary_id');
     const result = await pool.query(
-      'INSERT INTO beneficiary (beneficiary_id, name, age, location, category) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [beneficiaryId, data.name, toNumber(data.age), data.location || null, data.category || null]
+      'INSERT INTO beneficiary (beneficiary_id, name, age, location, category, contact, project_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;',
+      [beneficiaryId, data.name, toNumber(data.age), data.location || null, data.category || null, data.contact || null, toNumber(data.project_id)]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -581,6 +595,8 @@ app.put('/api/beneficiaries/:id', async (req, res) => {
     age: req.body.age,
     location: cleanString(req.body.location),
     category: cleanString(req.body.category),
+    contact: cleanString(req.body.contact),
+    project_id: req.body.project_id,
   };
 
   const validationError = validateBeneficiary(data);
@@ -588,8 +604,8 @@ app.put('/api/beneficiaries/:id', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE beneficiary SET name = $1, age = $2, location = $3, category = $4 WHERE beneficiary_id = $5 RETURNING *;',
-      [data.name, toNumber(data.age), data.location || null, data.category || null, req.params.id]
+      'UPDATE beneficiary SET name = $1, age = $2, location = $3, category = $4, contact = $5, project_id = $6 WHERE beneficiary_id = $7 RETURNING *;',
+      [data.name, toNumber(data.age), data.location || null, data.category || null, data.contact || null, toNumber(data.project_id), req.params.id]
     );
 
     if (result.rowCount === 0) return res.status(404).json({ error: 'Beneficiary not found.' });
@@ -633,6 +649,7 @@ app.post('/api/donations', async (req, res) => {
     project_id: req.body.project_id,
     donation_date: cleanString(req.body.donation_date),
     amount: req.body.amount,
+    payment_method: cleanString(req.body.payment_method),
   };
 
   const validationError = validateDonation(data);
@@ -644,8 +661,8 @@ app.post('/api/donations', async (req, res) => {
   try {
     const donationId = await getNextId('donation', 'donation_id');
     const result = await pool.query(
-      'INSERT INTO donation (donation_id, donor_id, project_id, donation_date, amount) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [donationId, Number(data.donor_id), data.project_id === '' ? null : Number(data.project_id), data.donation_date || null, Number(data.amount)]
+      'INSERT INTO donation (donation_id, donor_id, project_id, donation_date, amount, payment_method) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;',
+      [donationId, Number(data.donor_id), data.project_id === '' ? null : Number(data.project_id), data.donation_date || null, Number(data.amount), data.payment_method || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -660,6 +677,7 @@ app.put('/api/donations/:id', async (req, res) => {
     project_id: req.body.project_id,
     donation_date: cleanString(req.body.donation_date),
     amount: req.body.amount,
+    payment_method: cleanString(req.body.payment_method),
   };
 
   const validationError = validateDonation(data);
@@ -670,8 +688,8 @@ app.put('/api/donations/:id', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE donation SET donor_id = $1, project_id = $2, donation_date = $3, amount = $4 WHERE donation_id = $5 RETURNING *;',
-      [Number(data.donor_id), data.project_id === '' ? null : Number(data.project_id), data.donation_date || null, Number(data.amount), req.params.id]
+      'UPDATE donation SET donor_id = $1, project_id = $2, donation_date = $3, amount = $4, payment_method = $5 WHERE donation_id = $6 RETURNING *;',
+      [Number(data.donor_id), data.project_id === '' ? null : Number(data.project_id), data.donation_date || null, Number(data.amount), data.payment_method || null, req.params.id]
     );
 
     if (result.rowCount === 0) return res.status(404).json({ error: 'Donation not found.' });
